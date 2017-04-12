@@ -1,14 +1,11 @@
 module Main exposing (..)
 
 import Html exposing (..)
+import Html.Attributes exposing (style, href)
 import Http
 import Json.Decode as Decode
 import Json.Decode.Pipeline
-
-
-apiUrl : String
-apiUrl =
-    "http://liveresultat.orientering.se/api.php?method="
+import Api
 
 
 competitionsUrl : String
@@ -44,15 +41,13 @@ type alias Competition =
 
 
 type alias Model =
-    { topic : String
-    , gifUrl : String
-    , competitions : Competitions
+    { competitions : Competitions
     }
 
 
 init : ( Model, Cmd Msg )
 init =
-    ( Model "" "waiting.gif" (Competitions [])
+    ( Model (Competitions [])
     , getCompetitions
     )
 
@@ -73,7 +68,7 @@ update msg model =
             ( model, getCompetitions )
 
         NewGif (Ok competitions) ->
-            ( Model model.topic "" competitions, Cmd.none )
+            ( Model competitions, Cmd.none )
 
         NewGif (Err _) ->
             ( model, Cmd.none )
@@ -93,7 +88,10 @@ view model =
 
 comp : Competition -> Html Msg
 comp competition =
-    div [] [ text competition.date, text " ", text competition.name ]
+    div [ style [ ( "display", "flex" ) ] ]
+        [ div [] [ text competition.date ]
+        , div [] [ a [ href ("http://www.dn.se?id=" ++ toString competition.id) ] [ text competition.name ] ]
+        ]
 
 
 
@@ -113,7 +111,7 @@ getCompetitions : Cmd Msg
 getCompetitions =
     let
         url =
-            apiUrl ++ competitionsUrl
+            Api.rootUrl ++ competitionsUrl
     in
         Http.send NewGif (Http.get url decodeCompetitions)
 
